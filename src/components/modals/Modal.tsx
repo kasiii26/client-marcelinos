@@ -34,11 +34,7 @@ export default function Modal({
             style={{ backgroundImage: `url('${backgroundImage}')` }}
           />
         )}
-
-        <div className="relative z-10">
-          {children}
-
-          {showCloseButton && (
+         {showCloseButton && (
             <button
               type="button"
               className="absolute top-2 right-2 text-white hover:text-gray-900 z-20"
@@ -47,6 +43,11 @@ export default function Modal({
               <CircleX />
             </button>
           )}
+
+        <div className="relative z-10">
+          {children}
+
+         
         </div>
       </div>
     </div>
