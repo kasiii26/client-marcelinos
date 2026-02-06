@@ -52,9 +52,9 @@ export function BookingReceiptPage({ referenceNumber }: BookingReceiptPageProps)
   }
 
   return (
-    <main className="min-h-screen bg-linear-to-br from-background to-muted/20 flex items-center justify-center p-4">
+      <main className="min-h-screen bg-linear-to-br from-background to-muted/20 flex items-center justify-center sm:px-4 py-4">
       <div className="w-full max-w-6xl mx-auto">
-        <Card className="p-8 shadow-none border-none">
+        <Card className="p-4 shadow-none border-none">
           <Stepper steps={STEPS} currentStep={RECEIPT_STEP} />
           <div className="mt-4 mb-8 min-h-87.5">
             <Step5 receiptData={receipt} qrCodeUrl={qrCodeUrl} />
