@@ -49,7 +49,7 @@ function CardItem(props: CardItemProps) {
   const subtitle = description ?? amenityNames(amenities);
 
   return (
-    <div className="max-w-sm mx-auto bg-white rounded-2xl shadow-md overflow-hidden border border-gray-100 transition-all hover:shadow-lg duration-300">
+    <div className="max-w-sm mx-auto h-full flex flex-col bg-white rounded-2xl shadow-md overflow-hidden border border-gray-100 transition-all hover:shadow-lg duration-300">
       <div className="w-full h-60 bg-gray-100 overflow-hidden">
         <img
           src={mainImage ?? "/placeholder-room.jpg"}
@@ -58,12 +58,12 @@ function CardItem(props: CardItemProps) {
           className="w-full h-full object-cover"
         />
       </div>
-      <div className="p-4">
+      <div className="p-4 flex flex-col flex-1">
         <h2 className="text-xl font-semibold mb-2 text-gray-900">{title}</h2>
         {capacity != null && (
           <p className="text-gray-600 text-sm mb-1">Capacity: {capacity}</p>
         )}
-        <p className="text-gray-600 text-sm mb-2 line-clamp-2">{subtitle}</p>
+        <p className="text-gray-600 text-sm mb-2 line-clamp-3 min-h-[60px]">{subtitle}</p>
         {price != null && (
           <p className="text-green-800 font-semibold">
             {pricingFormat(String(price))}

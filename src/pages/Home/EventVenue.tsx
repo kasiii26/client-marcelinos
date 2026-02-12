@@ -61,13 +61,13 @@ function EventVenues() {
       ) : venueList.length === 0 ? (
         <p className="text-center text-gray-500">No venues available.</p>
       ) : (
-        <div className="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8 px-6">
+          <div className="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8 px-6 items-stretch">
           {venueList.map((venue) => {
             const mainImage = venueMainImage(venue);
             return (
               <div
                 key={venue.id}
-                className="max-w-sm mx-auto bg-white rounded-2xl shadow-md overflow-hidden border border-gray-100 transition-all hover:shadow-lg duration-300">
+                className="w-full flex flex-col h-full bg-white rounded-2xl shadow-md overflow-hidden border border-gray-100 transition-all hover:shadow-lg duration-300">
                 <div className="w-full h-60 bg-gray-100 overflow-hidden">
                   <img
                     src={mainImage ?? "/placeholder-room.jpg"}
@@ -81,8 +81,8 @@ function EventVenues() {
                     {venue.name ?? "Venue"}
                   </h3>
                   {venue.description && (
-                    <p className="text-gray-600 text-sm mb-2 line-clamp-2">
-                      {venue.description}
+                    <p className="text-gray-600 text-sm mb-2 line-clamp-3 h-[60px]">
+                      {venue.description ?? ""}
                     </p>
                   )}
                   {venue.capacity != null && (

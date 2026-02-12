@@ -79,7 +79,7 @@ function RoomCard() {
             paddingBottom: "50px",
           }}>
           {roomList.map((room: Record<string, unknown>) => (
-            <SwiperSlide key={String(room.id)}>
+            <SwiperSlide key={String(room.id)} className="flex">
               <CardItem
                 id={room.id as number}
                 type={room.type as string}
