@@ -104,7 +104,7 @@ export default function PaymentPolicyConfirmContent({
         <button
           onClick={onConfirm}
           disabled={isDisabled}
-          className={`inline-flex items-center justify-center gap-2 min-w-[140px] px-4 py-2 rounded-md transition ${
+          className={`inline-flex items-center justify-center gap-2 min-w-35 px-4 py-2 rounded-md transition ${
             isDisabled
               ? "bg-gray-400 text-gray-700 cursor-not-allowed"
               : "bg-amber-400 text-black hover:bg-amber-500"
