@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Download, House, ReceiptText } from "lucide-react";
+import { Download, House, ReceiptText, Calendar } from "lucide-react";
 import domtoimage from "dom-to-image";
 import { BookingReceipt } from "@/types/booking.types";
 import { clearBookingStorage } from "@/lib/storage/localStorage";
@@ -9,6 +9,7 @@ import { pricingFormat } from "@/lib/formatters/pricingFormat";
 import { useApiMutation } from "@/lib/api/mutations/useApiMutation";
 import CancelBookingContent from "@/components/modals/CancelBookingContent";
 import Modal from "@/components/modals/Modal";
+import RescheduleModal from "@/components/modals/RescheduleModal";
 // your existing Modal component
 
 interface Step5FormDataProps {
@@ -219,6 +220,8 @@ export function Step5(props: Props) {
     if (!referenceNumber) return;
     setIsCancelModalOpen(true); // open the modal instead of alert
   };
+
+  const [showModal, setShowModal] = useState(false);
 
   return (
     <motion.div
@@ -547,6 +550,17 @@ export function Step5(props: Props) {
               "Cancel Booking"
             )}
           </button>
+          <button
+            onClick={() => setShowModal(true)}
+            disabled={isCancelled}
+            className={`cursor-pointer text-white px-5 py-2 rounded-lg font-semibold text-sm shadow-sm transition flex items-center justify-center gap-2 w-full md:w-auto
+    ${isCancelled ? "opacity-50 cursor-not-allowed" : "hover:opacity-95"}
+  `}
+            style={{ backgroundColor: "var(--color-sage)" }}
+          >
+            <Calendar className="w-4 h-4" />
+            Reschedule Booking
+          </button>
         </div>
       </div>
       <Modal
@@ -576,6 +590,16 @@ export function Step5(props: Props) {
             }
           }}
           isSubmitting={isSubmitting}
+        />
+      </Modal>
+      <Modal
+        open={showModal}
+        onClose={() => setShowModal(false)}
+        showCloseButton={true}
+      >
+        <RescheduleModal
+          bookingRef={referenceNumber}
+          onClose={() => setShowModal(false)}
         />
       </Modal>
     </motion.div>
