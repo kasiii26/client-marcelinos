@@ -605,7 +605,7 @@ export function FormWrapper<T extends z.ZodType<any, any>>({
 									return (
 										<div className="flex justify-center mt-5">
 											<Button
-												type="button"
+												type="button" 
 												variant="outline"
 												className={cn(
 													"h-12 w-12 rounded-full p-0",

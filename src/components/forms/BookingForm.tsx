@@ -140,7 +140,7 @@ export default function BookingForm() {
 				{
 					//reset button//
 					name: "date_reset",
-					type: "reset" as const,
+					type: "reset" as const, 
 					itemClassName: "flex justify-center items-center mt-4",
 					className: "text-white hover:bg-white/15 border-white/20 bg-white/10",
 					label: "",
