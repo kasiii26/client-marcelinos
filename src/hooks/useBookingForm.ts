@@ -8,7 +8,12 @@ import {
   getFromLocalStorage,
   BOOKING_EXPIRATION,
 } from "@/lib/storage/localStorage";
-import { calculateTotalPrice, calculateGrandTotalPrice } from "@/lib/math/calculate";
+import {
+  calculateTotalPrice,
+  calculateGrandTotalPrice,
+  calculateVenuesLineTotal,
+} from "@/lib/math/calculate";
+import { parseRoomTypeFilters } from "@/lib/utils/booking.utils";
 /**
  * Custom hook for managing booking form state and persistence
  */
@@ -24,15 +29,49 @@ export const useBookingForm = () => {
     navigate("/");
   }
 
+	const bookingTypeInit =
+		(reservationDate?.booking_type as FormData["booking_type"]) ||
+		storedFormData?.booking_type ||
+		defaultFormData.booking_type;
+
   const initialFormData: FormData = {
-    ...defaultFormData,
-    ...(storedFormData || {}),
-    check_in:
-      formatDate(reservationDate?.check_in) || storedFormData?.check_in || "",
-    check_out:
-      formatDate(reservationDate?.check_out) || storedFormData?.check_out || "",
-    days: reservationDate?.days || storedFormData?.days || 1,
-  };
+		...defaultFormData,
+		...(storedFormData || {}),
+		booking_type: bookingTypeInit,
+		venue_event_date:
+			(reservationDate?.venue_event_date &&
+				formatDate(reservationDate.venue_event_date)) ||
+			storedFormData?.venue_event_date ||
+			(bookingTypeInit === "both" && reservationDate?.check_in
+				? formatDate(reservationDate.check_in)
+				: "") ||
+			"",
+		check_in:
+			formatDate(reservationDate?.check_in) || storedFormData?.check_in || "",
+		check_out:
+			formatDate(reservationDate?.check_out) || storedFormData?.check_out || "",
+		days: reservationDate?.days || storedFormData?.days || 1,
+		room_type_filters:
+			bookingTypeInit === "venue"
+				? []
+				: parseRoomTypeFilters(
+						reservationDate?.room_type_filters ??
+							storedFormData?.room_type_filters,
+					),
+		venue_event_type: (() => {
+			const v = storedFormData?.venue_event_type as
+				| FormData["venue_event_type"]
+				| undefined;
+			if (v) return v;
+			if (
+				Array.isArray(storedFormData?.venues) &&
+				storedFormData.venues.length > 0
+			) {
+				return "wedding";
+			}
+			return defaultFormData.venue_event_type;
+		})(),
+	};
 
   const [formData, setFormData] = useState<FormData>(initialFormData);
 
@@ -53,17 +92,35 @@ export const useBookingForm = () => {
       navigate("/");
     }
   }, [reservationDate, navigate]);
-  // Keep grandTotalPrice in sync when days or rooms/venues change
+  // Keep grandTotalPrice in sync when days, rooms, venues, or event type change.
+  // Do not clear venue_event_type when venues are empty — guests can pick event type
+  // before selecting venues (prices on cards follow this choice).
   useEffect(() => {
-    setFormData((prev) => ({
-      ...prev,
-      grandTotalPrice: calculateGrandTotalPrice(
-        prev.rooms,
+    setFormData((prev) => {
+      const rooms = prev.rooms ?? [];
+      const venues = prev.venues ?? [];
+      const venueEventType = prev.venue_event_type || "wedding";
+      const totalPrice =
+        calculateTotalPrice(rooms) +
+        calculateVenuesLineTotal(venues, venueEventType);
+      const grandTotalPrice = calculateGrandTotalPrice(
+        rooms,
         prev.days,
-        prev.venues ?? [],
-      ),
-    }));
-  }, [formData.days, formData.rooms, formData.venues]);
+        venues,
+        prev.booking_type,
+        venueEventType,
+      );
+
+      if (
+        totalPrice === prev.totalPrice &&
+        grandTotalPrice === prev.grandTotalPrice
+      ) {
+        return prev;
+      }
+
+      return { ...prev, totalPrice, grandTotalPrice };
+    });
+  }, [formData.days, formData.rooms, formData.venues, formData.venue_event_type]);
 
   const handleInputChange = (
     e: React.ChangeEvent<
@@ -79,26 +136,41 @@ export const useBookingForm = () => {
 
   const setSelectedRooms = (rooms: any[]) =>
     setFormData((prev) => {
+      const venues = prev.venues ?? [];
+      const venueEventType = prev.venue_event_type || "wedding";
       const totalPrice =
-        calculateTotalPrice(rooms) + calculateTotalPrice(prev.venues ?? []);
+        calculateTotalPrice(rooms) +
+        calculateVenuesLineTotal(venues, venueEventType);
       const grandTotalPrice = calculateGrandTotalPrice(
         rooms,
         prev.days,
-        prev.venues ?? [],
+        venues,
+        prev.booking_type,
+        venueEventType,
       );
       return { ...prev, rooms, totalPrice, grandTotalPrice };
     });
 
   const setSelectedVenues = (venues: any[]) =>
     setFormData((prev) => {
+      const v = venues ?? [];
+      const venueEventType = prev.venue_event_type || "wedding";
       const totalPrice =
-        calculateTotalPrice(prev.rooms) + calculateTotalPrice(venues);
+        calculateTotalPrice(prev.rooms) +
+        calculateVenuesLineTotal(v, venueEventType);
       const grandTotalPrice = calculateGrandTotalPrice(
         prev.rooms,
         prev.days,
-        venues,
+        v,
+        prev.booking_type,
+        venueEventType,
       );
-      return { ...prev, venues, totalPrice, grandTotalPrice };
+      return {
+        ...prev,
+        venues: v,
+        totalPrice,
+        grandTotalPrice,
+      };
     });
 
   const setPaymentMethod = (method: string) =>
@@ -128,4 +200,4 @@ export const useBookingForm = () => {
     nextStep,
     previousStep,
   };
-};;
+};

@@ -94,6 +94,7 @@ export function MultiStepForm() {
             <motion.div key="step1" {...stepMotion}>
               <Step1
                 formData={formData}
+                updateFormData={updateFormData}
                 setSelectedRooms={setSelectedRooms}
                 setSelectedVenues={setSelectedVenues}
               />
@@ -112,6 +113,9 @@ export function MultiStepForm() {
           {formData.current_step === 3 && (
             <motion.div key="step3" {...stepMotion}>
               <Step3
+                updateFormData={updateFormData}
+                setSelectedRooms={setSelectedRooms}
+                setSelectedVenues={setSelectedVenues}
                 formData={formData}
                 selectedRoom={{
                   name: "Standard",

@@ -2,17 +2,14 @@
 
 import { useEffect, useState } from "react";
 import { ButtonLoader } from "@/components/ui/loader";
-// import { PAYMENT_METHODS } from "@/enum/constants";
 
 interface PaymentPolicyConfirmContentProps {
-  paymentMethod?: string;
   onCancel: () => void;
   onConfirm: () => void;
   isSubmitting?: boolean;
 }
 
 export default function PaymentPolicyConfirmContent({
-  // paymentMethod,
   onCancel,
   onConfirm,
   isSubmitting = false,
@@ -32,63 +29,68 @@ export default function PaymentPolicyConfirmContent({
   const isDisabled = secondsLeft > 0 || isSubmitting;
 
   return (
-    <div className="text-white h-full">
-          {/* HEADER */}
-      <div className="text-lg font-bold mb-2 md:mb-4 text-white">
-        <h3>Booking Policy</h3>
-      
-
-      {/* DESCRIPTION */}
-      <p className="text-[11px]">
-        Review the terms and condition to understand the booking guidelines and policies
-      </p>
-</div>
-
-      <div className="flex flex-col md:flex-row mb-2 md:mb-4 justify-center gap-4">
-        {/* CHECK IN */}
-        <div className="text-xs text-white flex-1">
-          <h2 className="font-bold">Check In:</h2>
-          <p className="text-[11px]">
-            Check-in is at 12:00 PM. <br />
-            A valid ID must be presented upon check-in.
-          </p>
-        </div>
-
-        {/* CHECK OUT */}
-        <div className="text-xs text-white flex-1">
-          <h2 className="font-bold">Check Out:</h2>
-          <p className="text-[11px]">
-            Check-out is at 9:00 PM. 
-            After check-out, guest must ensure that all personal belongings are secured. 
-            The resort shall not be held liable for any lost items.
-          </p>
-        </div>
-      </div>
-
-
-          {/* HEADER */}
-      <div className="text-lg font-bold mb-2 md:mb-2 text-white">
-        <h3>Payment Policy</h3>
-      </div>
-      
-       {/* INTRO */}
-      <div className="text-xs mb-1 md:mb-2 text-white">
-        <p className="text-[11px]">A 50% cash down payment and is non-refundable. <br></br> For fully paid bookings, a 30% deduction will be applied in case of cancellation.</p>
-      </div>
-
-      <h2 className="font-extrabold text-white/90 uppercase text-lg md:text-xl">
-        STRICLY <span className="text-red-600 font-extrabold">NO SMOKING!</span> Inside the ROOM.
-      </h2>
-        <p className="text-xs">PENALTY --- Php 5,000.00 </p>
-
-      <div className="text-[11px] text-white/80 space-y-2">
-        <p className="text-[11px]">
-          If Lost or Broken the following items will be charged accordingly:
+    <div className="flex flex-col max-h-[70vh] text-white">
+      {/* HEADER */}
+      <div className="mt-3 mb-3 md:mb-5 text-center">
+        <h2 className="text-xl font-bold">Booking Policy</h2>
+        <p className="text-xs text-white/80 mt-1">
+          Review the terms and conditions to understand the booking guidelines
+          and policies.
         </p>
-        <div className="text-[11px] text-white">
-          <h4 className="font-semibold mb-2">Damage & Loss Charges:</h4>
+      </div>
 
-        <ul className="grid grid-cols-2 pl-3 gap-x-2 gap-y-1 list-disc list-inside text-left">
+      {/* SCROLLABLE BODY */}
+      <div className="flex-1 overflow-y-auto text-xs space-y-5 pb-2">
+        {/* CHECK IN / OUT */}
+        <div className="grid md:grid-cols-2 gap-4 text-center">
+          <div>
+            <h3 className="font-bold">Check In:</h3>
+            <p className="text-[11px]">
+              Check-in is at 12:00 PM. <br />A valid ID must be presented upon
+              check-in.
+            </p>
+          </div>
+
+          <div>
+            <h3 className="font-bold">Check Out:</h3>
+            <p className="text-[11px]">
+              Check-out is at 9:00 PM. After check-out, guests must ensure all
+              personal belongings are secured. The resort will not be held
+              liable for any lost items.
+            </p>
+          </div>
+        </div>
+
+        {/* PAYMENT POLICY */}
+        <div className="text-center">
+          <h3 className="text-lg font-bold mb-1">Payment Policy</h3>
+          <p className="text-[11px]">
+            A 50% cash down payment is required and is non-refundable. <br />
+            For fully paid bookings, a 30% deduction will be applied in case of
+            cancellation.
+          </p>
+        </div>
+
+        {/* NO SMOKING */}
+        <div className="text-center">
+          <h3 className="text-lg font-extrabold uppercase">
+            STRICTLY <span className="text-red-500">NO SMOKING!</span> INSIDE
+            THE ROOM
+          </h3>
+          <p className="text-xs">PENALTY — Php 5,000.00</p>
+        </div>
+
+        {/* DAMAGE CHARGES */}
+        <div>
+          <p className="text-center text-[11px] mb-3">
+            If lost or broken, the following items will be charged accordingly:
+          </p>
+
+          <h4 className="font-semibold text-center mb-3">
+            Damage & Loss Charges
+          </h4>
+
+          <ul className="grid grid-cols-2 gap-y-2 text-[11px] list-disc list-inside">
             <li>Television – Php 25,000.00</li>
             <li>Emergency Lights – Php 2,000.00</li>
             <li>Cups and Glass – Php 100.00 each</li>
@@ -100,26 +102,24 @@ export default function PaymentPolicyConfirmContent({
           </ul>
         </div>
 
+        {isDisabled && (
+          <p className="text-amber-300 text-xs text-center">
+            Please review the policy. You can confirm in {secondsLeft} second
+            {secondsLeft !== 1 ? "s" : ""}.
+          </p>
+        )}
       </div>
 
-      {/* Countdown */}
-      {isDisabled && (
-        <p className="text-xs text-amber-300">
-          Please review the policy. You can confirm in {secondsLeft} second
-          {secondsLeft !== 1 ? "s" : ""}.
-        </p>
-      )}
-
-      <div className="flex justify-end text-xs gap-2 pt-4">
+      {/* FOOTER */}
+      <div className="pt-3 pb-1 flex justify-center gap-3">
         <button
           onClick={onConfirm}
           disabled={isDisabled}
-          className={`inline-flex items-center justify-center gap-2 min-w-[140px] px-2 py-1 rounded-md transition ${
+          className={`inline-flex items-center justify-center gap-2 px-4 py-1.5 rounded text-sm bg-yellow-600 text-white transition ${
             isDisabled
-              ? "bg-gray-400 text-gray-700 cursor-not-allowed"
-              : "bg-amber-400 text-black hover:bg-amber-500"
-          }`}
-        >
+              ? "bg-yellow-600/60 cursor-not-allowed hover:bg-yellow-600/60"
+              : "hover:bg-yellow-800"
+          }`}>
           {isSubmitting ? (
             <ButtonLoader className="border-amber-800/40 border-t-amber-900" />
           ) : isDisabled ? (
@@ -131,12 +131,14 @@ export default function PaymentPolicyConfirmContent({
 
         <button
           onClick={onCancel}
-          className="px-4 py-2 rounded-md bg-gray-500 hover:bg-gray-600"
-        >
+          disabled={isSubmitting}
+          className={`px-6 py-2 rounded bg-gray-500 text-white transition hover:bg-gray-600 ${
+            isSubmitting
+              ? "cursor-not-allowed opacity-70 hover:bg-gray-500"
+              : ""
+          }`}>
           Cancel
         </button>
-
-        
       </div>
     </div>
   );

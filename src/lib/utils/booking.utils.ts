@@ -1,5 +1,54 @@
-import { FormData, BookingPayload } from "@/types/booking.types";
+import {
+  FormData,
+  BookingPayload,
+  type RoomLinePayload,
+  type RoomTypeFilter,
+} from "@/types/booking.types";
+import { roomInventoryGroupKey } from "@/lib/formatters/roomDisplayName";
 import { getFromLocalStorage } from "@/lib/storage/localStorage";
+import { COUNTRIES } from "@/lib/constants/countries";
+import { DEFAULT_ROOM_TYPE_FILTERS } from "@/lib/constants/booking.constants";
+
+const ROOM_TYPE_SLUGS = new Set<RoomTypeFilter>([
+  "standard",
+  "family",
+  "deluxe",
+]);
+
+/** Parse stored room-type filters; falls back to all types when missing or invalid. */
+export function parseRoomTypeFilters(raw: unknown): RoomTypeFilter[] {
+  if (!Array.isArray(raw)) return [...DEFAULT_ROOM_TYPE_FILTERS];
+  const next = raw.filter((x): x is RoomTypeFilter =>
+    typeof x === "string" && ROOM_TYPE_SLUGS.has(x as RoomTypeFilter),
+  );
+  return next.length > 0 ? next : [...DEFAULT_ROOM_TYPE_FILTERS];
+}
+
+/** Map API `room.type` to a known slug, or null if unknown. */
+export function normalizeRoomTypeSlug(type: unknown): RoomTypeFilter | null {
+  const t = String(type ?? "")
+    .toLowerCase()
+    .trim();
+  if (t === "standard" || t === "family" || t === "deluxe") return t;
+  return null;
+}
+
+/** Group rooms by `description`; empty/missing shares one bucket. */
+export function normalizeRoomDescriptionKey(description: unknown): string {
+  const s = String(description ?? "").trim();
+  return s || "__default__";
+}
+
+/**
+ * Whether the rooms API row can be booked for the requested dates.
+ * Honors `available`, `is_block_date`, and explicit `available: false` from the API.
+ */
+export function isRoomInventoryAvailable(room: any): boolean {
+  if (room == null) return false;
+  if (room.available === false) return false;
+  if (room.is_block_date === true) return false;
+  return true;
+}
 
 /**
  * Generates a unique reference ID for bookings
@@ -12,6 +61,40 @@ export const generateReferenceId = (): string => {
 /** Normalize room/venue to id (object with id or number). */
 const toId = (item: { id?: number } | number): number =>
   typeof item === "number" ? item : Number((item as { id: number }).id) || 0;
+
+/**
+ * Collapse selected inventory rows into API room_lines (type + bed-spec group + qty + rate).
+ * Matches backend {@link RoomInventoryGroupKey}.
+ */
+export function collapseRoomsToLines(rooms: unknown[]): RoomLinePayload[] {
+  if (!Array.isArray(rooms) || rooms.length === 0) return [];
+  const map = new Map<
+    string,
+    { room_type: string; inventory_group_key: string; quantity: number; unit_price: number }
+  >();
+  for (const r of rooms) {
+    const room = r as {
+      type?: string;
+      price?: number | string;
+    };
+    const type = normalizeRoomTypeSlug(room.type) ?? "standard";
+    const key = roomInventoryGroupKey(r as Parameters<typeof roomInventoryGroupKey>[0]);
+    const id = `${type}|${key}`;
+    const price = Number(room.price) || 0;
+    const existing = map.get(id);
+    if (existing) {
+      existing.quantity += 1;
+    } else {
+      map.set(id, {
+        room_type: type,
+        inventory_group_key: key,
+        quantity: 1,
+        unit_price: price,
+      });
+    }
+  }
+  return Array.from(map.values());
+}
 
 type ParsedLocalPHAddress = {
   barangay: string;
@@ -26,6 +109,14 @@ type StoredPHAddress = {
 };
 
 const PH_ADDRESS_STORAGE_KEY = "reservationDetails.personal.phAddress";
+
+const normalizeInternationalCountry = (rawCountry: string): string | null => {
+  const normalized = (rawCountry || "").trim().toLowerCase();
+  if (!normalized) return null;
+  return (
+    COUNTRIES.find((country) => country.toLowerCase() === normalized) ?? null
+  );
+};
 
 /**
  * Parses the local PH address string produced by the UI:
@@ -53,7 +144,10 @@ const parseLocalPHAddress = (address: string): ParsedLocalPHAddress | null => {
 export const buildBookingPayload = (formData: FormData): BookingPayload => {
   const storedAddress = getFromLocalStorage(PH_ADDRESS_STORAGE_KEY) as StoredPHAddress | null;
   const isIntl = storedAddress?.addressType === "international";
-  const roomIds = (formData.rooms || []).map(toId).filter(Boolean);
+  const validInternationalCountry = isIntl
+    ? normalizeInternationalCountry(formData.address)
+    : null;
+  const roomLines = collapseRoomsToLines(formData.rooms || []);
   const venueIds = (formData.venues || []).map(toId).filter(Boolean);
 
   const parsedLocal = !isIntl ? parseLocalPHAddress(formData.address) : null;
@@ -69,8 +163,11 @@ export const buildBookingPayload = (formData: FormData): BookingPayload => {
     check_in: formData.check_in,
     check_out: formData.check_out,
     days: formData.days,
-    rooms: roomIds,
+    ...(roomLines.length > 0 && { room_lines: roomLines }),
     ...(venueIds.length > 0 && { venues: venueIds }),
+    ...(venueIds.length > 0 && {
+      venue_event_type: formData.venue_event_type || "wedding",
+    }),
     total_price: formData.grandTotalPrice ?? (formData.totalPrice ?? 0) * (formData.days ?? 1),
 
     first_name: formData.firstName || "N/A",
@@ -78,9 +175,9 @@ export const buildBookingPayload = (formData: FormData): BookingPayload => {
     last_name: formData.lastName || "N/A",
     email: formData.email,
     contact_num: formData.phone || "0000000000",
-    gender: formData.gender || "Male",
+    gender: formData.gender || "male",
     is_international: isIntl,
-    country: isIntl ? formData.address || null : "Philippines",
+    country: isIntl ? validInternationalCountry : "Philippines",
     region: isIntl ? formData.region || null : parsedLocal?.region || null,
     province,
     municipality,

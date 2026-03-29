@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { cn } from "@/lib/utils";
 import { pricingFormat } from "@/lib/formatters/pricingFormat";
 import { RoomTypeBadge } from "@/components/ui/RoomTypeBadge";
+import { UnavailableReasonOverlay } from "@/components/booking/UnavailableReasonOverlay";
 
 interface RoomCardProps {
   id: number;
@@ -13,12 +14,18 @@ interface RoomCardProps {
   capacity: string;
   includes: string;
   price: string | number;
+  bed_specifications?: string[];
+  bed_modifiers?: string[];
   selected?: boolean;
   onSelectRoom: (id: number) => void;
   /** Optional list of amenity names for pill tags (e.g. ["WiFi", "AC", "Slippers"]) */
   amenityPills?: string[];
   /** When false, room is not available for the selected dates; selection is disabled. When true or undefined, room is bookable. */
   availability?: boolean | null;
+  /** From API when unavailable: short headline (e.g. maintenance, blocked, already reserved). */
+  unavailabilityTitle?: string | null;
+  /** From API: supporting explanation (e.g. staff block reason or reservation overlap). */
+  unavailabilityDetail?: string | null;
 }
 
 const EMPTY_FIELD = "—";
@@ -33,11 +40,20 @@ export const RoomCard: React.FC<RoomCardProps> = ({
   capacity,
   includes,
   price,
+  bed_specifications,
+  bed_modifiers,
   selected = false,
   onSelectRoom,
   amenityPills,
   availability = true,
+  unavailabilityTitle,
+  unavailabilityDetail,
 }) => {
+  const unavailableHeadline =
+    unavailabilityTitle?.trim() || "Not available for selected dates";
+  const unavailableSub =
+    unavailabilityDetail?.trim() || "Choose different dates or another room";
+
   const showCapacity = capacity && capacity !== EMPTY_FIELD;
   const isAvailable = availability !== false;
 
@@ -79,7 +95,7 @@ export const RoomCard: React.FC<RoomCardProps> = ({
       aria-label={
         isAvailable
           ? `${title}, ${pricingFormat(String(price))} per night. ${selected ? "Selected" : "Select"}`
-          : `${title}, ${pricingFormat(String(price))} per night. Not available for selected dates.`
+          : `${title}, ${pricingFormat(String(price))} per night. ${unavailableHeadline}. ${unavailableSub}`
       }
       className={cn(
         "group relative flex flex-col rounded-md text-left shadow-sm transition-all duration-200 overflow-hidden",
@@ -98,7 +114,8 @@ export const RoomCard: React.FC<RoomCardProps> = ({
           e.preventDefault();
           onSelectRoom(id);
         }
-      }}>
+      }}
+    >
       {/* Image on top */}
       <div
         className="relative w-full h-[250px] bg-gray-100 overflow-hidden"
@@ -109,38 +126,14 @@ export const RoomCard: React.FC<RoomCardProps> = ({
           backgroundPosition: "center",
         }}
         role="img"
-        aria-label={title}>
-        {/* Type Badge (e.g. "family") in the top-left over the image */}
-        {type && (
-          <div className="absolute top-2 left-2 z-10">
-            <RoomTypeBadge type={type} />
-          </div>
-        )}
+        aria-label={title}
+      >
         {/* Not available for selected dates — text only, readable on any background */}
         {!isAvailable && (
-          <div
-            className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-1.5 bg-black/30 backdrop-blur-[2px]"
-            onClick={(e) => e.stopPropagation()}
-            aria-hidden>
-            <p
-              className="text-center font-semibold leading-snug"
-              style={{
-                color: "#fafaf9",
-                fontSize: "0.9375rem",
-                textShadow:
-                  "0 0 1px rgba(0,0,0,1), 0 1px 3px rgba(0,0,0,0.9), 0 2px 6px rgba(0,0,0,0.7)",
-              }}>
-              Not available for selected dates
-            </p>
-            <p
-              className="text-center text-xs leading-relaxed"
-              style={{
-                color: "#f5f5f4",
-                textShadow: "0 0 1px rgba(0,0,0,1), 0 1px 2px rgba(0,0,0,0.8)",
-              }}>
-              Choose different dates or another room
-            </p>
-          </div>
+          <UnavailableReasonOverlay
+            title={unavailableHeadline}
+            detail={unavailableSub}
+          />
         )}
         {hasGallery && (
           <>
@@ -148,13 +141,15 @@ export const RoomCard: React.FC<RoomCardProps> = ({
               type="button"
               onClick={goPrev}
               className="absolute left-2 top-1/2 z-10 -translate-y-1/2 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 shadow-md ring-1 ring-black/10 backdrop-blur-sm hover:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-(--color-sage)"
-              aria-label="Previous image">
+              aria-label="Previous image"
+            >
               <svg
                 className="h-5 w-5 text-gray-700"
                 fill="none"
                 stroke="currentColor"
                 strokeWidth={2}
-                viewBox="0 0 24 24">
+                viewBox="0 0 24 24"
+              >
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -166,13 +161,15 @@ export const RoomCard: React.FC<RoomCardProps> = ({
               type="button"
               onClick={goNext}
               className="absolute right-2 top-1/2 z-10 -translate-y-1/2 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 shadow-md ring-1 ring-black/10 backdrop-blur-sm hover:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-(--color-sage)"
-              aria-label="Next image">
+              aria-label="Next image"
+            >
               <svg
                 className="h-5 w-5 text-gray-700"
                 fill="none"
                 stroke="currentColor"
                 strokeWidth={2}
-                viewBox="0 0 24 24">
+                viewBox="0 0 24 24"
+              >
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -201,7 +198,8 @@ export const RoomCard: React.FC<RoomCardProps> = ({
                     backgroundImage: `url(${img})`,
                     backgroundSize: "cover",
                     backgroundPosition: "center",
-                  }}>
+                  }}
+                >
                   <span className="sr-only">Image {i + 1}</span>
                 </button>
               ))}
@@ -217,13 +215,15 @@ export const RoomCard: React.FC<RoomCardProps> = ({
           <div
             className="absolute top-4 right-5 z-10 flex h-8 w-8 items-center justify-center rounded-full shadow-md"
             style={{ backgroundColor: "var(--color-sage)" }}
-            aria-hidden>
+            aria-hidden
+          >
             <svg
               className="h-5 w-5 text-white"
               fill="none"
               stroke="currentColor"
               strokeWidth={3}
-              viewBox="0 0 24 24">
+              viewBox="0 0 24 24"
+            >
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -232,15 +232,23 @@ export const RoomCard: React.FC<RoomCardProps> = ({
             </svg>
           </div>
         )}
-        <h3
-          className="font-display text-xl font-bold capitalize tracking-tight"
-          style={{ color: "var(--color-charcoal)" }}>
-          {title}
-        </h3>
+        {type ? (
+          <div className="mb-2">
+            <RoomTypeBadge type={type} isTitle />
+          </div>
+        ) : (
+          <h3
+            className="font-display text-xl font-bold capitalize tracking-tight"
+            style={{ color: "var(--color-charcoal)" }}
+          >
+            {title}
+          </h3>
+        )}
         {description && description !== EMPTY_FIELD && (
           <p
             className="mt-1 text-sm opacity-80"
-            style={{ color: "var(--color-charcoal)" }}>
+            style={{ color: "var(--color-charcoal)" }}
+          >
             {description}
           </p>
         )}
@@ -250,13 +258,32 @@ export const RoomCard: React.FC<RoomCardProps> = ({
               "mt-2 text-sm",
               selected ? "font-medium" : "opacity-80",
             )}
-            style={{ color: "var(--color-charcoal)" }}>
+            style={{ color: "var(--color-charcoal)" }}
+          >
             Capacity:{" "}
             <span className="font-semibold">
               {capacity} {Number(capacity) === 1 ? "guest" : "guests"}
             </span>
           </p>
         )}
+        {bed_specifications && bed_specifications.length > 0 && (
+          <p
+            className={cn(
+              "mt-2 text-sm",
+              selected ? "font-medium" : "opacity-80",
+            )}
+            style={{ color: "var(--color-charcoal)" }}
+          >
+            Beds:{" "}
+            <span className="font-semibold">
+              {bed_specifications.join(", ")}
+              {bed_modifiers &&
+                bed_modifiers.length > 0 &&
+                ` (${bed_modifiers.join(", ")})`}
+            </span>
+          </p>
+        )}
+        {/* bedSpecs omitted because they are now the title */}
         {pills.length > 0 && (
           <div className="mt-3 flex flex-wrap gap-2">
             {pills.map((label, i) => (
@@ -266,7 +293,8 @@ export const RoomCard: React.FC<RoomCardProps> = ({
                 style={{
                   backgroundColor: "var(--color-cream, #f5f5f0)",
                   color: "var(--color-charcoal)",
-                }}>
+                }}
+              >
                 {label}
               </span>
             ))}
@@ -276,7 +304,8 @@ export const RoomCard: React.FC<RoomCardProps> = ({
           <div>
             <p
               className={cn("text-xs", selected ? "opacity-90" : "opacity-70")}
-              style={{ color: "var(--color-charcoal)" }}>
+              style={{ color: "var(--color-charcoal)" }}
+            >
               From
             </p>
             <p
@@ -284,13 +313,15 @@ export const RoomCard: React.FC<RoomCardProps> = ({
                 "font-display text-lg font-bold",
                 selected ? "opacity-100" : "opacity-90",
               )}
-              style={{ color: "var(--color-charcoal)" }}>
+              style={{ color: "var(--color-charcoal)" }}
+            >
               {pricingFormat(String(price))}
               <span
                 className={cn(
                   "text-sm font-normal",
                   selected ? "opacity-80" : "opacity-70",
-                )}>
+                )}
+              >
                 {" "}
                 /night
               </span>
@@ -326,11 +357,12 @@ export const RoomCard: React.FC<RoomCardProps> = ({
             }
             aria-label={
               !isAvailable
-                ? "Not available for selected dates"
+                ? `${unavailableHeadline}. ${unavailableSub}`
                 : selected
                   ? "Selected"
                   : "Select room"
-            }>
+            }
+          >
             {!isAvailable ? "Unavailable" : selected ? "Selected" : "Select"}
           </button>
         </div>

@@ -1,4 +1,13 @@
-export type Gender = "Male" | "Female";
+export type Gender = "male" | "female" | "other";
+
+/** Drives date rules on the hero form and pricing (room nights vs single-day venue). */
+export type BookingKind = "room" | "venue" | "both";
+
+/** When booking venues, rate tier: full price (wedding/birthday) vs seminar rate. */
+export type VenueEventType = "wedding" | "birthday" | "seminar";
+
+/** Room inventory `type` values (matches backend `rooms.type` enum). */
+export type RoomTypeFilter = "standard" | "family" | "deluxe";
 
 export interface BookingResponse {
   message: string;
@@ -18,6 +27,12 @@ export interface BookingConflictResponse {
   conflicts?: {
     rooms?: Array<{ id: number; name: string }>;
     venues?: Array<{ id: number; name: string }>;
+    room_lines?: Array<{
+      room_type: string;
+      inventory_group_key: string;
+      requested: number;
+      available: number;
+    }>;
   };
 }
 
@@ -29,6 +44,7 @@ export interface BookingReferenceResponse {
     check_in?: string;
     check_out?: string;
     no_of_days?: number;
+    venue_event_type?: string | null;
     total_price?: string | number;
     created_at?: string;
     guest?: {
@@ -79,15 +95,32 @@ export interface BookingReceipt {
   guest_email: string;
   guest_contact: string;
   guest_address: string;
-  /** Multiple rooms (API now returns array) */
+  /** Assigned physical rooms (optional until staff assigns). */
   rooms?: Array<{
     name: string;
     type: string;
     capacity: number;
     price: number | string;
+    bed_specifications?: string[];
   }>;
+  /** Requested room types from guest checkout (no room name yet). */
+  room_lines?: Array<{
+    room_type: string;
+    inventory_group_key: string;
+    quantity: number;
+    unit_price_per_night: number | string;
+  }>;
+  /** True when stay includes accommodation (show check-in/out times on receipt). */
+  has_room_stay?: boolean;
   /** Multiple venues */
-  venues?: Array<{ name: string; capacity: number; price: number | string }>;
+  venues?: Array<{
+    name: string;
+    capacity: number;
+    price: number | string;
+    seminar_price?: number | string;
+  }>;
+  /** Stored when the booking includes venues */
+  venue_event_type?: string | null;
   /** @deprecated use rooms instead */
   room?: {
     number: number | null;
@@ -102,9 +135,20 @@ export interface BookingReceipt {
 export interface FormData {
   reference_number?: string;
   current_step: number;
+  /** What the guest is booking: stay only, event space only, or both */
+  booking_type: BookingKind;
+  /** For `both`: calendar day of the venue/event (same-day use). Used for venue availability API. */
+  venue_event_date: string;
+  /** Required when `venues` is non-empty; drives venue line pricing. */
+  venue_event_type: VenueEventType | "";
   check_in: string;
   check_out: string;
   days: number;
+  /**
+   * For `room` and `both`: which room types to show on step 1 (one or more).
+   * Ignored for `venue`-only bookings.
+   */
+  room_type_filters: RoomTypeFilter[];
   rooms: any[];
   venues: any[];
 
@@ -141,14 +185,24 @@ export interface PersonalDetails {
   address: string;
 }
 
+/** Collapsed room-type lines for POST /bookings (no specific room id). */
+export interface RoomLinePayload {
+  room_type: string;
+  inventory_group_key: string;
+  quantity: number;
+  unit_price: number;
+}
+
 export interface BookingPayload {
   reference_number?: string;
   payment_method?: string;
   check_in: string;
   check_out: string;
   days: number;
-  rooms: number[];
+  /** Guest booking: room type + bed-spec lines (staff assigns physical rooms later). */
+  room_lines?: RoomLinePayload[];
   venues?: number[];
+  venue_event_type?: string;
   total_price: number;
   grand_total_price?: number;
   first_name: string;

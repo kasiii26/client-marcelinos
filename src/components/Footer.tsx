@@ -9,18 +9,21 @@ function Footer() {
     { name: "Home", href: "#home" },
     { name: "About", href: "#about" },
     { name: "Rooms", href: "#rooms" },
+    { name: "Venues", href: "#venues" },
     { name: "Services", href: "#services" },
     { name: "Gallery", href: "#gallery" },
     { name: "Review", href: "#reviews" },
   ];
 
   const second_link = [
+    { name: "Blog", href: "/blog" },
     { name: "Refund Policy", href: "/refund-policy" },
     { name: "Terms & Conditions", href: "/terms-and-conditions" },
     { name: "Privacy Policy", href: "/privacy-policy" },
     // { name: "FAQs", href: "/faqs" },
     // { name: "Careers", href: "/careers" }, //for future expansion
     { name: "Sitemap", href: "/sitemap" },
+    { name: "Hotel Rooms Rules and Regulations", href: "/rules-regulation" },
   ];
 
   const handleSectionClick = (e: React.MouseEvent, hash: string) => {
@@ -74,7 +77,8 @@ function Footer() {
             <Link
               to="https://www.facebook.com/profile.php?id=61557457680496"
               target="_blank"
-              rel="noopener noreferrer">
+              rel="noopener noreferrer"
+            >
               <Facebook className="yellow" size={30} />
             </Link>
             {/* <Link to="https://www.instagram.com/marcelinosplace/">
@@ -97,7 +101,8 @@ function Footer() {
                 <button
                   type="button"
                   onClick={(e) => handleSectionClick(e, link.href)}
-                  className="hover:underline text-sm text-left bg-transparent border-none p-0 cursor-pointer text-white font-inherit">
+                  className="hover:underline text-sm text-left bg-transparent border-none p-0 cursor-pointer text-white font-inherit"
+                >
                   {link.name}
                 </button>
               </li>
@@ -115,7 +120,8 @@ function Footer() {
                 <ArrowRight size={16} className="yellow" />
                 <Link
                   to={link.href}
-                  className="hover:underline text-sm text-white no-underline">
+                  className="hover:underline text-sm text-white no-underline"
+                >
                   {link.name}
                 </Link>
               </li>

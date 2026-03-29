@@ -24,6 +24,7 @@ const apiUrlProd = import.meta.env.VITE_API_URL_PROD;
 const baseApiUrl = env === "production" ? apiUrlProd : apiUrlDev;
 
 const wsHost = import.meta.env.VITE_WS_HOST;
+// Port 8080 for local Reverb; 443 for production (behind reverse proxy, same as HTTPS)
 const wsPort = import.meta.env.VITE_WS_PORT ?? "8080";
 const wsKey = import.meta.env.VITE_WS_KEY ?? "local-key";
 const wsScheme = import.meta.env.VITE_WS_SCHEME ?? "http";
@@ -69,7 +70,7 @@ export function getEcho(): Echo<any> | null {
       wsPort: Number(port),
       wssPort: Number(port),
       forceTLS: useTls,
-      enabledTransports: ["ws", "wss"],
+      enabledTransports: useTls ? ["wss", "ws"] : ["ws"],
       authEndpoint,
       auth: {
         headers: {

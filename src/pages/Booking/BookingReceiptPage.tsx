@@ -20,7 +20,9 @@ interface BookingReceiptPageProps {
 const RECEIPT_STEP = 5;
 
 /** Transform GET /bookings/reference/:ref response into BookingReceipt format for Step5 */
-function toBookingReceipt(res: BookingReferenceResponse): BookingReceipt | null {
+function toBookingReceipt(
+  res: BookingReferenceResponse,
+): BookingReceipt | null {
   const b = res.booking;
   if (!b) return null;
   const guest = b.guest;
@@ -59,12 +61,32 @@ function toBookingReceipt(res: BookingReferenceResponse): BookingReceipt | null 
       type: r.type ?? "",
       capacity: r.capacity ?? 0,
       price: r.price ?? 0,
+      bed_specifications: Array.isArray(r.bed_specifications)
+        ? (r.bed_specifications as string[])
+        : [],
     })),
+    room_lines: Array.isArray(b.room_lines)
+      ? b.room_lines.map((l: Record<string, unknown>) => ({
+          room_type: String(l.room_type ?? ""),
+          inventory_group_key: String(l.inventory_group_key ?? ""),
+          quantity: Number(l.quantity) || 0,
+          unit_price_per_night:
+            typeof l.unit_price_per_night === "number" ||
+            typeof l.unit_price_per_night === "string"
+              ? (l.unit_price_per_night as number | string)
+              : 0,
+        }))
+      : [],
+    has_room_stay:
+      (Array.isArray(b.room_lines) ? b.room_lines.length : 0) > 0 ||
+      (b.rooms?.length ?? 0) > 0,
     venues: (b.venues ?? []).map((v) => ({
       name: v.name ?? "",
       capacity: v.capacity ?? 0,
       price: v.price ?? 0,
+      seminar_price: (v as { seminar_price?: number | string }).seminar_price ?? 0,
     })),
+    venue_event_type: b.venue_event_type ?? null,
     subtotal: total,
     grand_total: total,
     qr_code_url: res.qr_code_url ?? null,
@@ -102,9 +124,12 @@ export function BookingReceiptPage({
     }, 400);
   }, [queryClient, referenceNumber]);
 
-  useEffect(() => () => {
-    if (refetchDebounceRef.current) clearTimeout(refetchDebounceRef.current);
-  }, []);
+  useEffect(
+    () => () => {
+      if (refetchDebounceRef.current) clearTimeout(refetchDebounceRef.current);
+    },
+    [],
+  );
 
   useRealtimeEvent({
     channel: RealtimeChannels.booking(referenceNumber),
@@ -118,7 +143,8 @@ export function BookingReceiptPage({
     return (
       <main
         className="min-h-screen flex flex-col items-center p-4 pb-10 landing-section-alt"
-        style={{ backgroundColor: "var(--color-cream)" }}>
+        style={{ backgroundColor: "var(--color-cream)" }}
+      >
         <div className="w-full max-w-6xl mx-auto">
           <ProgressIndicator currentStep={RECEIPT_STEP} />
           <div className="mt-6 mb-8">
@@ -146,7 +172,8 @@ export function BookingReceiptPage({
         paymentStatus === "success"
           ? "bg-green-100 text-green-800"
           : "bg-amber-100 text-amber-800"
-      }`}>
+      }`}
+    >
       <span>
         {paymentStatus === "success"
           ? "Payment successful! Your booking is confirmed."
@@ -165,7 +192,8 @@ export function BookingReceiptPage({
   return (
     <main
       className="min-h-screen flex flex-col items-center p-4 pb-10 landing-section-alt"
-      style={{ backgroundColor: "var(--color-cream)" }}>
+      style={{ backgroundColor: "var(--color-cream)" }}
+    >
       <div className="w-full max-w-6xl mx-auto">
         <ProgressIndicator currentStep={RECEIPT_STEP} />
         {PaymentStatusBanner}
