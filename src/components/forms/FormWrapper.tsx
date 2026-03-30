@@ -601,7 +601,7 @@ export function FormWrapper<T extends z.ZodType<any, any>>({
 												);
 											}
 												//reset button//
-											case "reset": 
+											case "reset":    
 									return (
 										<div className="flex justify-center mt-5">
 											<Button
